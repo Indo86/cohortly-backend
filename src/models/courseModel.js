@@ -1,0 +1,34 @@
+import mongoose from "mongoose";
+
+// Course -> Section -> Lesson. Sections and lessons live in their own collections
+// and point at the course; the course no longer carries a content array.
+// Cascade deletes are explicit (services/cascade.js), not model hooks.
+const courseModel = mongoose.Schema({
+    name: {type: String, required: true},
+    thumbnail: {type: String, required: true},
+    category: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Category'
+    },
+    tagline: {type: String, required: true},
+    description: {type: String, required: true},
+    students: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User'
+    }],
+    manager: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User'
+    },
+    // draft: visible to the owning instructor only. published: visible to enrolled students.
+    status: {
+        type: String,
+        enum: ['draft', 'published'],
+        default: 'draft'
+    }
+})
+
+courseModel.index({manager: 1})
+courseModel.index({students: 1, status: 1})
+
+export default mongoose.model('Course', courseModel)
