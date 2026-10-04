@@ -20,7 +20,7 @@ import { issueCertificateIfEligible } from '../services/certificates.js'
 // the AUTHORITATIVE course completion (`progress.completed`: all lessons, plus a passed final quiz
 // when the course has one), `nextLesson`, `nextActivity`, the `quiz` summary and the `certificate`.
 
-const courseImageUrl = (name) => `${getConfig().appUrl}/uploads/courses/${name}`
+const courseImageUrl = (name) => (name ? `${getConfig().appUrl}/uploads/courses/${name}` : null)
 
 // Dashboard: enrolled, published courses with progress and the next lesson.
 // Enrolled courses that are drafts / unpublished are left out of the active learning list.

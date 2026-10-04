@@ -14,7 +14,7 @@ import { quizProblems } from '../utils/quiz.js'
 import { buildOutline } from '../services/structure.js'
 import { deleteCourseCascade, unenrollStudent } from '../services/cascade.js'
 
-const courseImageUrl = (name) => `${getConfig().appUrl}/uploads/courses/${name}`
+const courseImageUrl = (name) => (name ? `${getConfig().appUrl}/uploads/courses/${name}` : null)
 const studentPhotoUrl = (name) => `${getConfig().appUrl}/uploads/students/${name}`
 
 // Runs a handler body and removes the just-uploaded file if the request fails afterwards.
@@ -84,8 +84,6 @@ export const getCourseById = asyncHandler(async (req, res) => {
 export const postCourse = cleanupUploadOnError(async (req, res) => {
     const body = parseOrThrow(mutateCourseSchema, req.body)
 
-    if (!req.file) throw badRequest('Thumbnail is required')
-
     const category = await categoryModel.findById(body.categoryId)
 
     if (!category) throw badRequest('Category not found')
@@ -96,7 +94,7 @@ export const postCourse = cleanupUploadOnError(async (req, res) => {
         category: category._id,
         description: body.description,
         tagline: body.tagline,
-        thumbnail: req.file.filename,
+        thumbnail: req.file?.filename ?? '',
         manager: req.user._id,
         status: 'draft',
     })

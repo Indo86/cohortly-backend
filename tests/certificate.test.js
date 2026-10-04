@@ -408,7 +408,7 @@ describe('public verification', () => {
         const res = await verify(number)
 
         assert.equal(res.status, 200)
-        assert.deepEqual(Object.keys(res.body.data).sort(), ['certificateNumber', 'courseName', 'instructorName', 'issuedAt', 'studentName', 'valid'])
+        assert.deepEqual(Object.keys(res.body.data).sort(), ['certificateNumber', 'courseName', 'instructorName', 'issuedAt', 'studentName', 'totalLessons', 'valid'])
         assert.equal(res.body.data.valid, true)
         assert.equal(res.body.data.certificateNumber, number)
         assert.equal(res.body.data.studentName, student.name)
@@ -419,7 +419,7 @@ describe('public verification', () => {
     it('does not reveal emails, internal ids, scores, attempts or subscription data', async () => {
         const text = JSON.stringify((await verify(number)).body)
 
-        for (const secret of [student.email, instructor.email, String(student._id), String(instructor._id), String(course._id), 'finalScore', 'totalLessons', 'accessStatus', 'attempt']) {
+        for (const secret of [student.email, instructor.email, String(student._id), String(instructor._id), String(course._id), 'finalScore', 'accessStatus', 'attempt']) {
             assert.equal(text.includes(secret), false, secret)
         }
     })

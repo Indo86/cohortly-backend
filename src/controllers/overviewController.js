@@ -39,7 +39,7 @@ export const getOverviews = asyncHandler(async (req, res) => {
             totalTexts,
             courses: courses.map((item) => ({
                 ...item.toObject(),
-                thumbnail_url: `${appUrl}/uploads/courses/${item.thumbnail}`,
+                thumbnail_url: item.thumbnail ? `${appUrl}/uploads/courses/${item.thumbnail}` : null,
                 total_students: item.students.length,
             })),
             students: students.map((item) => ({

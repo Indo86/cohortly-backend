@@ -60,6 +60,9 @@ export const verifyCertificate = asyncHandler(async (req, res) => {
             courseName: certificate.courseName,
             instructorName: certificate.instructorName,
             issuedAt: certificate.issuedAt,
+            // the size of the course is not personal data; it lets the verified sheet look exactly like the viewed one
+            // (the quiz score deliberately stays private)
+            totalLessons: certificate.totalLessons,
         },
     })
 })
