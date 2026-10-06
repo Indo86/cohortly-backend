@@ -1,3 +1,5 @@
 .env
 /public/uploads
 node_modules
+# personal CV artifacts (never part of this repository)
+/artifacts/cv/
