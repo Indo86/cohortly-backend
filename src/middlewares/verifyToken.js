@@ -36,9 +36,22 @@ export const verifyToken = asyncHandler(async (req, res, next) => {
         throw unauthorized('Invalid or expired token')
     }
 
-    const user = await userModel.findById(userId, '_id name email role manager')
+    // every token this API issues carries iat and exp; one without them never expires and cannot be
+    // compared with a password change, so it is not accepted
+    if (!Number.isInteger(decoded.iat) || !Number.isInteger(decoded.exp)) {
+        throw unauthorized('Invalid or expired token')
+    }
+
+    const user = await userModel.findById(userId, '_id name email role manager passwordChangedAt')
 
     if (!user) throw unauthorized('Invalid or expired token')
+
+    // Credential invalidation: a token issued before the latest password change is no longer valid.
+    // iat has a resolution of one second, so it is compared in whole seconds (a token issued in the
+    // same second as the change stays valid).
+    if (user.passwordChangedAt && decoded.iat < Math.floor(user.passwordChangedAt.getTime() / 1000)) {
+        throw unauthorized('Invalid or expired token')
+    }
 
     req.user = {
         _id: user._id.toString(),

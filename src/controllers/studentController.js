@@ -89,6 +89,8 @@ export const updateStudent = cleanupUploadOnError(async (req, res) => {
     // the password changes only when one was explicitly supplied
     if (body.password !== undefined) {
         student.password = await bcrypt.hash(body.password, BCRYPT_ROUNDS)
+        // signs the student out everywhere: tokens issued before now are rejected (verifyToken)
+        student.passwordChangedAt = new Date()
     }
 
     if (req.file) student.photo = req.file.filename

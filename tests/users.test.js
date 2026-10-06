@@ -4,6 +4,7 @@ import {
     PASSWORD, PNG, auth, createInstructor, createStudent, mockFetch, midtransOk, models, resetDb, startTestEnv,
     stopTestEnv,
 } from './helpers.js'
+import jwt from 'jsonwebtoken'
 
 let request
 
@@ -141,6 +142,42 @@ describe('student password safety', () => {
         assert.deepEqual(short.body.errors, [{ path: 'password', message: 'Use a password of at least 8 characters' }])
         assert.equal((await edit(instructor, student, { name: student.name, email: student.email, password: '12345678' })).status, 200)
         assert.equal((await signIn(student.email, '12345678')).status, 200)
+    })
+
+    it('a new password signs the student out: tokens issued before the change are refused (M2)', async () => {
+        const instructor = await createInstructor()
+        const student = await createStudent(instructor)
+        const issuedEarlier = jwt.sign(
+            { data: { id: student._id.toString() }, iat: Math.floor(Date.now() / 1000) - 60 },
+            process.env.SECRET_KEY_JWT,
+            { algorithm: 'HS256', expiresIn: '1 days' }
+        )
+        const me = (token) => request.get('/api/me').set('Authorization', `JWT ${token}`)
+
+        assert.equal((await me(issuedEarlier)).status, 200)
+
+        assert.equal((await edit(instructor, student, { name: student.name, email: student.email, password: 'brand-new-pass' })).status, 200)
+        assert.ok((await models.userModel.findById(student._id)).passwordChangedAt)
+
+        const refused = await me(issuedEarlier)
+
+        assert.equal(refused.status, 401)
+        assert.equal(refused.body.message, 'Invalid or expired token')
+
+        const fresh = await signIn(student.email, 'brand-new-pass')
+
+        assert.equal(fresh.status, 200)
+        assert.equal((await me(fresh.body.data.token)).status, 200)
+    })
+
+    it('editing a student WITHOUT a new password keeps their sessions (M2)', async () => {
+        const instructor = await createInstructor()
+        const student = await createStudent(instructor)
+        const token = jwt.sign({ data: { id: student._id.toString() }, iat: Math.floor(Date.now() / 1000) - 60 }, process.env.SECRET_KEY_JWT, { expiresIn: '1 days' })
+
+        assert.equal((await edit(instructor, student, { name: 'Renamed Student', email: student.email })).status, 200)
+        assert.equal((await models.userModel.findById(student._id)).passwordChangedAt, undefined)
+        assert.equal((await request.get('/api/me').set('Authorization', `JWT ${token}`)).status, 200)
     })
 
     it('rejects a supplied password that is too short instead of silently ignoring it', async () => {

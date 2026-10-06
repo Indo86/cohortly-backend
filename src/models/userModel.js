@@ -36,6 +36,9 @@ const userModel = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User'
     },
+    // Set whenever the password is replaced. Tokens issued before it are rejected by verifyToken,
+    // so a password change signs out every existing session. Unset = never changed (legacy accounts).
+    passwordChangedAt: Date,
 })
 
 export default mongoose.model("User", userModel)
