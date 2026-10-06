@@ -1,0 +1,17 @@
+# Line-ending policy: text files are stored in the repository with LF and checked out with LF
+# on every OS, whatever each machine's core.autocrlf setting is. Git detects binary files
+# automatically (text=auto); the common binary types below are listed explicitly so they are
+# never normalized.
+* text=auto eol=lf
+
+*.png   binary
+*.jpg   binary
+*.jpeg  binary
+*.gif   binary
+*.ico   binary
+*.webp  binary
+*.woff  binary
+*.woff2 binary
+*.pdf   binary
+*.docx  binary
+*.zip   binary
