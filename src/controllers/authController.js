@@ -1,9 +1,8 @@
 import bcrypt from 'bcrypt'
-import jwt from 'jsonwebtoken'
 import userModel from '../models/userModel.js'
-import { getConfig } from '../config/env.js'
 import { asyncHandler } from '../utils/asyncHandler.js'
 import { conflict, unauthorized } from '../utils/httpError.js'
+import { signSessionToken } from '../utils/authToken.js'
 import { ROLES } from '../utils/roles.js'
 import { getEntitlementForUser } from '../services/entitlement.js'
 import { startCheckout } from '../services/payments.js'
@@ -68,11 +67,7 @@ export const signInAction = asyncHandler(async (req, res) => {
         throw unauthorized('Email / password incorrect')
     }
 
-    const token = jwt.sign(
-        { data: { id: existingUser._id.toString() } },
-        getConfig().jwtSecret,
-        { algorithm: 'HS256', expiresIn: '1 days' }
-    )
+    const token = signSessionToken(existingUser)
 
     // Credentials are valid at this point. Entitlement is reported, never enforced
     // here, so an expired or unpaid workspace can still sign in and be routed to

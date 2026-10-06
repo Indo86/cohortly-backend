@@ -4,6 +4,7 @@ import userModel from '../models/userModel.js'
 import { getConfig } from '../config/env.js'
 import { asyncHandler } from '../utils/asyncHandler.js'
 import { unauthorized } from '../utils/httpError.js'
+import { matchesCurrentCredentials } from '../utils/authToken.js'
 
 // Authorization: JWT <token>
 // Every failure is a controlled 401; jsonwebtoken's internal messages are never exposed.
@@ -36,8 +37,8 @@ export const verifyToken = asyncHandler(async (req, res, next) => {
         throw unauthorized('Invalid or expired token')
     }
 
-    // every token this API issues carries iat and exp; one without them never expires and cannot be
-    // compared with a password change, so it is not accepted
+    // every token this API issues carries iat and exp; one without an expiry would never expire, so
+    // neither is optional
     if (!Number.isInteger(decoded.iat) || !Number.isInteger(decoded.exp)) {
         throw unauthorized('Invalid or expired token')
     }
@@ -46,12 +47,10 @@ export const verifyToken = asyncHandler(async (req, res, next) => {
 
     if (!user) throw unauthorized('Invalid or expired token')
 
-    // Credential invalidation: a token issued before the latest password change is no longer valid.
-    // iat has a resolution of one second, so it is compared in whole seconds (a token issued in the
-    // same second as the change stays valid).
-    if (user.passwordChangedAt && decoded.iat < Math.floor(user.passwordChangedAt.getTime() / 1000)) {
-        throw unauthorized('Invalid or expired token')
-    }
+    // Credential invalidation: a token issued before the latest password change is no longer valid
+    // (utils/authToken.js matchesCurrentCredentials). A deleted account is the 401 above; the role always
+    // comes from the stored account, never from the token.
+    if (!matchesCurrentCredentials(decoded, user)) throw unauthorized('Invalid or expired token')
 
     req.user = {
         _id: user._id.toString(),
