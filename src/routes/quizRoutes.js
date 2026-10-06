@@ -9,6 +9,7 @@ import { verifyToken } from "../middlewares/verifyToken.js";
 import { validateObjectId, validateRequest } from "../middlewares/validateRequest.js";
 import { quizQuestionSchema, quizSettingsSchema, reorderQuestionsSchema } from "../utils/schema.js";
 import { ROLES } from "../utils/roles.js";
+import { rateLimitFor } from "../middlewares/rateLimit.js";
 
 // Final quiz management (INSTRUCTOR + ACTIVE workspace + ownership through the course) and the
 // certificate endpoints. The student quiz endpoints live in learningRoutes.js.
@@ -33,7 +34,7 @@ const ownCertificate = [verifyToken, requireRole(ROLES.STUDENT)]
 quizRoutes.get('/my-certificates', ownCertificate, getMyCertificates)
 quizRoutes.get('/my-certificates/:certificateNumber', ownCertificate, getMyCertificate)
 
-// PUBLIC verification: no authentication, safe fields only.
-quizRoutes.get('/certificates/verify/:certificateNumber', verifyCertificate)
+// PUBLIC verification: no authentication, safe fields only, rate limited per address.
+quizRoutes.get('/certificates/verify/:certificateNumber', rateLimitFor('certificateVerify'), verifyCertificate)
 
 export default quizRoutes

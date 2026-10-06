@@ -1,6 +1,7 @@
 import { describe, it, before, after, beforeEach } from 'node:test'
 import assert from 'node:assert/strict'
 import jwt from 'jsonwebtoken'
+import supertest from 'supertest'
 import {
     PASSWORD, auth, createInstructor, createStudent, models, resetDb, startTestEnv, stopTestEnv, tokenFor,
 } from './helpers.js'
@@ -68,6 +69,47 @@ describe('sign-in', () => {
 
         assert.equal(res.status, 400)
         assert.ok(Array.isArray(res.body.errors))
+    })
+})
+
+describe('sign-in rate limit with real accounts (M2)', () => {
+    // a second app with the limits switched on (the shared test app keeps them off); the app module is
+    // already loaded by helpers.js with the test environment
+    const limitedApp = async () => {
+        const { createApp } = await import('../src/app.js')
+
+        process.env.RATE_LIMIT_ENABLED = 'true'
+
+        try {
+            return supertest(createApp())
+        } finally {
+            delete process.env.RATE_LIMIT_ENABLED
+        }
+    }
+
+    it('successful sign-ins are never counted (a whole class behind one address can sign in)', async () => {
+        const limited = await limitedApp()
+        const instructor = await createInstructor()
+
+        for (let i = 0; i < 15; i += 1) {
+            assert.equal((await limited.post('/api/sign-in').send({ email: instructor.email, password: PASSWORD })).status, 200)
+        }
+    })
+
+    it('wrong passwords for one account are cut off at 10, and then even the right one waits', async () => {
+        const limited = await limitedApp()
+        const instructor = await createInstructor()
+
+        for (let i = 0; i < 10; i += 1) {
+            assert.equal((await limited.post('/api/sign-in').send({ email: instructor.email, password: 'wrong-pass' })).status, 401)
+        }
+
+        const blocked = await limited.post('/api/sign-in').send({ email: instructor.email, password: PASSWORD })
+
+        assert.equal(blocked.status, 429)
+        assert.equal(blocked.body.code, 'RATE_LIMITED')
+        // the default test app (limits off) is unaffected
+        assert.equal((await request.post('/api/sign-in').send({ email: instructor.email, password: PASSWORD })).status, 200)
     })
 })
 

@@ -1,5 +1,6 @@
 import express from 'express'
 import cors from 'cors'
+import helmet from 'helmet'
 
 import { getConfig } from './config/env.js'
 import { PUBLIC_DIR } from './config/paths.js'
@@ -13,6 +14,7 @@ import learningRoutes from './routes/learningRoutes.js'
 import quizRoutes from './routes/quizRoutes.js'
 import aiRoutes from './routes/aiRoutes.js'
 import { errorHandler, notFoundHandler } from './middlewares/errorHandler.js'
+import { createRateLimiters } from './middlewares/rateLimit.js'
 
 // Builds the Express app without starting it (so tests can mount it directly).
 export const createApp = () => {
@@ -20,7 +22,18 @@ export const createApp = () => {
 
     app.disable('x-powered-by')
 
-    const { corsOrigins } = getConfig()
+    const { corsOrigins, rateLimitEnabled, trustProxy } = getConfig()
+
+    // req.ip must be the client (not a reverse proxy) for the per-address rate limits
+    app.set('trust proxy', trustProxy)
+    // route-specific limiters with their own counters per app (middlewares/rateLimit.js)
+    app.locals.rateLimiters = createRateLimiters({ enabled: rateLimitEnabled })
+
+    // Security headers (Helmet defaults: nosniff, frame protection, HSTS, a restrictive CSP for the JSON
+    // and image responses this API serves, ...). One exception: uploaded images are displayed by the
+    // frontend, which runs on another origin, so they must be loadable cross-origin
+    // (Cross-Origin-Resource-Policy: cross-origin instead of same-origin).
+    app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }))
 
     app.use(
         cors({

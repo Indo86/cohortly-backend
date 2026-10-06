@@ -25,6 +25,30 @@ export const getAiConfig = () => ({
     maxPerMinuteGlobal: boundedInt(process.env.AI_GLOBAL_MAX_PER_MINUTE, 15, 1, 10000),
 })
 
+// Rate limiting (middlewares/rateLimit.js) is ON everywhere except the automated tests, which switch
+// it on explicitly where they test it. RATE_LIMIT_ENABLED=true|false overrides the default.
+const rateLimitEnabled = () => {
+    const value = String(process.env.RATE_LIMIT_ENABLED ?? '').trim().toLowerCase()
+
+    if (value === 'true') return true
+    if (value === 'false') return false
+
+    return process.env.NODE_ENV !== 'test'
+}
+
+// Express "trust proxy": needed behind a reverse proxy / load balancer so req.ip (the rate-limit key) is
+// the client and not the proxy. Unset = do not trust any proxy (direct connections).
+const trustProxy = () => {
+    const value = process.env.TRUST_PROXY
+
+    if (value === undefined || value === '') return false
+    if (/^\d+$/.test(value)) return Number(value)
+    if (value === 'true') return true
+    if (value === 'false') return false
+
+    return value
+}
+
 export const getConfig = () => ({
     port: Number(process.env.PORT) || 3000,
     databaseUrl: process.env.DATABASE_URL ?? '',
@@ -44,6 +68,8 @@ export const getConfig = () => ({
     subscriptionPrice: Number(process.env.SUBSCRIPTION_PRICE) || 280000,
     // calendar months of access bought by one successful payment
     subscriptionPeriodMonths: Number(process.env.SUBSCRIPTION_PERIOD_MONTHS) || 1,
+    rateLimitEnabled: rateLimitEnabled(),
+    trustProxy: trustProxy(),
     ai: getAiConfig(),
 })
 
