@@ -1,7 +1,7 @@
 import { describe, it, before, after, beforeEach } from 'node:test'
 import assert from 'node:assert/strict'
 import {
-    auth, complete, createCategory, createCourse, createInstructor, createLesson, createSection, createStudent, enroll,
+    PNG, auth, complete, createCategory, createCourse, createInstructor, createLesson, createSection, createStudent, enroll,
     models, pay, resetDb, startTestEnv, stopTestEnv, daysAgo,
 } from './helpers.js'
 
@@ -33,7 +33,7 @@ describe('course create / detail contract (M5)', () => {
             .field('tagline', 'A tagline')
             .field('description', 'A long enough description')
             .field('categoryId', category._id.toString())
-            .attach('thumbnail', Buffer.from('x'), { filename: 'a.png', contentType: 'image/png' })
+            .attach('thumbnail', PNG, { filename: 'a.png', contentType: 'image/png' })
 
         assert.equal(res.status, 200)
         assert.match(res.body.data._id, /^[0-9a-f]{24}$/)
@@ -64,7 +64,7 @@ describe('course status (draft / published)', () => {
             .field('description', 'A long enough description')
             .field('categoryId', category._id.toString())
             .field('status', 'published')
-            .attach('thumbnail', Buffer.from('x'), { filename: 'a.png', contentType: 'image/png' })
+            .attach('thumbnail', PNG, { filename: 'a.png', contentType: 'image/png' })
 
         assert.equal(res.status, 200)
         assert.equal((await models.courseModel.findOne({ name: 'Draft by default' })).status, 'draft')

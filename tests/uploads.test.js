@@ -61,11 +61,48 @@ describe('upload hardening', () => {
         assert.equal(fs.existsSync(path.join(publicDir, 'evil.name.with.dots.php.png')), false)
     })
 
-    it('derives the extension from the validated MIME type, not from the name', async () => {
+    it('derives the extension from the real content, not from the name or the declared type (M2)', async () => {
         const res = await createCourseRequest({ buffer: PNG, filename: 'photo.exe', contentType: 'image/jpeg' })
 
         assert.equal(res.status, 200)
-        assert.match(files('courses')[0], /\.jpg$/)
+        assert.match(files('courses')[0], /^thumbnail-[0-9a-f-]{36}\.png$/)
+        assert.equal((await models.courseModel.findOne()).thumbnail, files('courses')[0])
+    })
+
+    it('refuses a fake image (other content declared as image/png) with 400 and stores nothing (M2)', async () => {
+        const res = await createCourseRequest({
+            buffer: Buffer.from('<?php echo 1; ?>'),
+            filename: 'cover.png',
+            contentType: 'image/png',
+        })
+
+        assert.equal(res.status, 400)
+        assert.equal(res.body.message, 'The file is not a valid JPEG or PNG image')
+        assert.equal(await models.courseModel.countDocuments(), 0)
+        assert.equal(files('courses').length, 0)
+    })
+
+    it('refuses image types outside the allowlist, declared or real (M2)', async () => {
+        const GIF = Buffer.from('R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7', 'base64')
+
+        assert.equal((await createCourseRequest({ buffer: GIF, filename: 'cover.gif', contentType: 'image/gif' })).status, 400)
+        assert.equal((await createCourseRequest({ buffer: GIF, filename: 'cover.png', contentType: 'image/png' })).status, 400)
+        assert.equal(await models.courseModel.countDocuments(), 0)
+        assert.equal(files('courses').length, 0)
+    })
+
+    it('checks avatars the same way: a fake avatar creates no student and stores nothing (M2)', async () => {
+        const res = await request
+            .post('/api/students')
+            .set(auth(instructor))
+            .field('name', 'Student Name')
+            .field('email', 'fake@new.dev')
+            .field('password', 'secret-pass-1')
+            .attach('avatar', Buffer.from('not an image at all'), { filename: 'me.png', contentType: 'image/png' })
+
+        assert.equal(res.status, 400)
+        assert.equal(await models.userModel.countDocuments({ email: 'fake@new.dev' }), 0)
+        assert.equal(files('students').length, 0)
     })
 
     it('rejects non-image uploads with 400 and stores nothing', async () => {

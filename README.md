@@ -394,6 +394,22 @@ have none (courses completed before certificates existed). It never runs automat
 lesson completion and their first passing attempt. Limits: lesson progress only reflects the present (a lesson that was undone and completed again moves the date), so the
 date is a defensible reconstruction, not a historical fact; draft courses are skipped (their certificates are issued when they are published).
 
+## Security baseline (M2)
+
+- **Rate limits** (route-specific, in-memory per process, `middlewares/rateLimit.js`): failed sign-ins 10 per account and
+  address / 15 min and 50 per address / 15 min (successful sign-ins are not counted), sign-ups 10 per address / hour,
+  public certificate verification 30 per address / minute. Over the limit: `429 { message, code: "RATE_LIMITED" }` with
+  `RateLimit` / `Retry-After` headers. `RATE_LIMIT_ENABLED=false` disables them; set `TRUST_PROXY` behind a proxy.
+- **Security headers:** Helmet defaults, except `Cross-Origin-Resource-Policy: cross-origin` so the frontend (another
+  origin) can display uploaded images.
+- **Passwords:** every new password needs 8 to 72 characters (`utils/schema.js` `passwordSchema`). Existing accounts
+  keep signing in with their current password.
+- **Tokens:** HS256 only, `exp` and `iat` required, the user is re-read on every request. Changing a password sets
+  `User.passwordChangedAt`; tokens issued before it are rejected (`401`).
+- **Uploads:** JPEG/PNG only, 2 MB, one file; the declared type must be on the allowlist and the real type is then read
+  from the file signature (`file-type`). Anything else is deleted and refused (`400`); the stored extension follows the
+  real type.
+
 ## Auth, authorization and access are separate
 
 - **Authentication** – `Authorization: JWT <token>`. Any failure is `401`.
