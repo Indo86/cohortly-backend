@@ -390,8 +390,11 @@ describe('content deletions that complete a course for people who were waiting',
     })
 
     it('deleting content that leaves the course empty issues nothing', async () => {
-        await request.delete(`/api/lessons/${lessons[0]._id}`).set(auth(instructor))
-        await request.delete(`/api/lessons/${lessons[1]._id}`).set(auth(instructor))
+        // a published course must keep a lesson (M1): emptying it means unpublishing first, and a draft issues nothing
+        assert.equal((await request.delete(`/api/lessons/${lessons[0]._id}`).set(auth(instructor))).status, 200)
+        assert.equal((await request.delete(`/api/lessons/${lessons[1]._id}`).set(auth(instructor))).status, 409)
+        assert.equal((await request.put(`/api/courses/${course._id}/status`).set(auth(instructor)).send({ status: 'draft' })).status, 200)
+        assert.equal((await request.delete(`/api/lessons/${lessons[1]._id}`).set(auth(instructor))).status, 200)
         assert.equal((await certificates()).length, 0)
     })
 })

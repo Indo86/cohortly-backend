@@ -1,18 +1,16 @@
 import courseModel from '../models/courseModel.js'
 import categoryModel from '../models/categoryModel.js'
 import userModel from '../models/userModel.js'
-import lessonModel from '../models/lessonModel.js'
-import quizModel from '../models/quizModel.js'
 import { mutateCourseSchema } from '../utils/schema.js'
 import { getConfig } from '../config/env.js'
 import { asyncHandler } from '../utils/asyncHandler.js'
-import { HttpError, badRequest } from '../utils/httpError.js'
+import { badRequest } from '../utils/httpError.js'
 import { parseOrThrow } from '../middlewares/validateRequest.js'
 import { removeUpload, removeUploadedFile } from '../utils/files.js'
 import { findOwnedCourse, findOwnedStudent } from '../utils/ownership.js'
-import { quizProblems } from '../utils/quiz.js'
 import { buildOutline } from '../services/structure.js'
 import { deleteCourseCascade, unenrollStudent } from '../services/cascade.js'
+import { assertPublishable } from '../services/publishing.js'
 
 const courseImageUrl = (name) => (name ? `${getConfig().appUrl}/uploads/courses/${name}` : null)
 const studentPhotoUrl = (name) => `${getConfig().appUrl}/uploads/students/${name}`
@@ -139,32 +137,19 @@ export const updateCourse = cleanupUploadOnError(async (req, res) => {
     return res.json({ message: 'Update Course Success' })
 })
 
-// Publish rules: the course must contain at least one lesson (which implies a section), and if it
-// has a final quiz that quiz must be complete (>= 1 question, each with >= 2 options and one correct
-// option, valid passing score), otherwise 422 QUIZ_NOT_READY. A course without a quiz publishes as
-// before. Sections without lessons are allowed; students never see them.
+// Publish rules (services/publishing.js): the course must contain at least one lesson (which implies a
+// section), otherwise 422 COURSE_NOT_PUBLISHABLE, and if it has a final quiz that quiz must be complete
+// (>= 1 question, each with >= 2 options and one correct option, valid passing score), otherwise
+// 422 QUIZ_NOT_READY. A course without a quiz publishes as before. Sections without lessons are allowed;
+// students never see them. While published, the course must keep at least one lesson (enforced by the
+// lesson and section deletes).
 // Unpublish is always allowed. It removes student access at once and keeps all progress.
 export const updateCourseStatus = asyncHandler(async (req, res) => {
     const course = await findOwnedCourse(req.params.id, req.user._id)
     const { status } = req.body
+    const publishing = status === 'published' && course.status !== 'published'
 
-    if (status === 'published' && course.status !== 'published') {
-        if ((await lessonModel.countDocuments({ course: course._id })) < 1) {
-            throw new HttpError(422, 'A course needs at least one lesson before it can be published', {
-                code: 'COURSE_NOT_PUBLISHABLE',
-            })
-        }
-
-        const quiz = await quizModel.findOne({ course: course._id })
-        const problems = quiz ? quizProblems(quiz) : []
-
-        if (problems.length > 0) {
-            throw new HttpError(422, 'Finish the final quiz before publishing the course', {
-                code: 'QUIZ_NOT_READY',
-                problems,
-            })
-        }
-    }
+    if (publishing) await assertPublishable(course._id)
 
     course.status = status
     await course.save()

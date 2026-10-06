@@ -482,6 +482,8 @@ describe('lesson summary (cached)', () => {
 
         await post('summary', {}, studentHeaders, lesson)
         assert.equal(await models.aiSummaryModel.countDocuments({}), 1)
+        // a published course must keep a lesson (M1), so another section holds one while this section goes
+        await createLesson(course, { section: await createSection(course, { title: 'Kept section' }), title: 'Kept lesson' })
         assert.equal((await request.delete(`/api/sections/${section._id}`).set(auth(instructor))).status, 200)
         assert.equal(await models.aiSummaryModel.countDocuments({}), 0)
 

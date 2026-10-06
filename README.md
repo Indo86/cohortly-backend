@@ -161,6 +161,9 @@ Courses start as `draft`. Instructors always see and manage their own courses. S
 course that is **published**, **enrolled** and whose instructor workspace is **ACTIVE**; anything else is a `404`
 (or `403 WORKSPACE_ACCESS_INACTIVE` when the workspace is inactive). Publishing requires at least one lesson
 (`422 COURSE_NOT_PUBLISHABLE` otherwise); sections without lessons are allowed but hidden from students.
+A published course must **keep** at least one lesson: deleting its last lesson, or a section holding its last lessons,
+is refused with `409 PUBLISHED_COURSE_INVARIANT` (unpublish first; drafts can be emptied freely). The rule lives in
+`services/publishing.js`.
 Unpublishing is always allowed, removes student access at once and **keeps all progress**.
 Enrolled students of a draft course are left out of their dashboard.
 

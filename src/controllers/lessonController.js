@@ -5,6 +5,7 @@ import { sanitizeRichText } from '../utils/sanitize.js'
 import { lessonFields, nextOrder, reorderChildren } from '../services/structure.js'
 import { deleteLessonCascade } from '../services/cascade.js'
 import { reconcileCourseCertificates } from '../services/certificates.js'
+import { assertPublishedCourseKeepsLessons } from '../services/publishing.js'
 
 // All handlers run behind instructorOnly (INSTRUCTOR role + ACTIVE workspace);
 // ownership is checked through section -> course.
@@ -52,10 +53,12 @@ export const updateLesson = asyncHandler(async (req, res) => {
     return res.json({ message: 'Update lesson success', data: present(lesson) })
 })
 
-// Deleting a lesson deletes every student's completion record for it.
+// Deleting a lesson deletes every student's completion record for it. The last lesson of a
+// PUBLISHED course cannot be deleted (409 PUBLISHED_COURSE_INVARIANT): unpublish first.
 export const deleteLessonAction = asyncHandler(async (req, res) => {
     const lesson = await findOwnedLesson(req.params.lessonId, req.user._id)
 
+    await assertPublishedCourseKeepsLessons(lesson.course, 1)
     await deleteLessonCascade(lesson)
     // removing a lesson can complete the course for students who had finished the rest
     await reconcileCourseCertificates(lesson.course)
