@@ -105,6 +105,7 @@ describe('isolation and configuration', () => {
             signInAddress: { windowMs: 15 * 60 * 1000, limit: 50 },
             signUp: { windowMs: 60 * 60 * 1000, limit: 10 },
             certificateVerify: { windowMs: 60 * 1000, limit: 30 },
+            passwordChange: { windowMs: 15 * 60 * 1000, limit: 10 },
         })
     })
 })

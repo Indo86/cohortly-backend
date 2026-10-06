@@ -19,6 +19,9 @@ export const RATE_LIMITS = Object.freeze({
     signUp: { windowMs: 60 * MINUTE, limit: 10 },
     // public certificate verification from one address (enumeration / scraping)
     certificateVerify: { windowMs: MINUTE, limit: 30 },
+    // failed password changes of ONE signed-in account: a stolen token cannot be used to guess the
+    // current password
+    passwordChange: { windowMs: 15 * MINUTE, limit: 10 },
 })
 
 const MESSAGES = {
@@ -26,10 +29,13 @@ const MESSAGES = {
     signInAddress: 'Too many failed sign-in attempts. Please wait a few minutes and try again.',
     signUp: 'Too many sign-up attempts. Please try again later.',
     certificateVerify: 'Too many verification requests. Please wait a minute and try again.',
+    passwordChange: 'Too many failed password changes. Please wait a few minutes and try again.',
 }
 
 const addressKey = (req) => ipKeyGenerator(req.ip ?? '')
 const accountKey = (req) => `${addressKey(req)}|${String(req.body?.email ?? '').trim().toLowerCase()}`
+// after verifyToken: the signed-in account
+const userKey = (req) => `user:${req.user?._id ?? addressKey(req)}`
 
 const limiter = (name, { key = addressKey, failedOnly = false } = {}) =>
     rateLimit({
@@ -53,6 +59,7 @@ export const createRateLimiters = ({ enabled }) =>
               ],
               signUp: [limiter('signUp')],
               certificateVerify: [limiter('certificateVerify')],
+              passwordChange: [limiter('passwordChange', { key: userKey, failedOnly: true })],
           }
         : {}
 

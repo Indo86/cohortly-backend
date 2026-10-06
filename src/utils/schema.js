@@ -26,6 +26,17 @@ export const signUpSchema = z.object({
     password
 })
 
+// The signed-in user's own password change. The new password follows the policy and must differ from
+// the current one (unknown keys, e.g. a user id, are stripped: the account always comes from the token).
+export const changePasswordSchema = z.object({
+    currentPassword: z.string().min(1, 'Enter your current password'),
+    newPassword: passwordSchema
+}).superRefine((value, ctx) => {
+    if (value.newPassword === value.currentPassword) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Choose a new password that is different from the current one', path: ['newPassword'] })
+    }
+})
+
 export const signInSchema = z.object({
     email,
     password: z.string().min(1)

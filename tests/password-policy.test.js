@@ -1,7 +1,8 @@
 import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
 import {
-    PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH, mutateStudentSchema, passwordSchema, signInSchema, signUpSchema, updateStudentSchema,
+    PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH, changePasswordSchema, mutateStudentSchema, passwordSchema, signInSchema, signUpSchema,
+    updateStudentSchema,
 } from '../src/utils/schema.js'
 
 // The password policy for NEW passwords (utils/schema.js passwordSchema): 8 to 72 characters, no
@@ -57,5 +58,31 @@ describe('password policy', () => {
     it('does not apply to sign-in: accounts created under the old 5-character minimum can still sign in', () => {
         assert.equal(signInSchema.safeParse({ email: 'old@test.dev', password: 'abc12' }).success, true)
         assert.equal(signInSchema.safeParse({ email: 'old@test.dev', password: '' }).success, false)
+    })
+})
+
+describe('change-password body (M3)', () => {
+    const change = (body) => changePasswordSchema.safeParse(body)
+    const pathsOf = (result) => result.error.issues.map((issue) => issue.path.join('.'))
+
+    it('needs the current password and a new password that follows the policy', () => {
+        assert.equal(change({ currentPassword: 'old-password', newPassword: 'new-password' }).success, true)
+        assert.deepEqual(pathsOf(change({ newPassword: 'new-password' })), ['currentPassword'])
+        assert.deepEqual(pathsOf(change({ currentPassword: '', newPassword: 'new-password' })), ['currentPassword'])
+        assert.deepEqual(pathsOf(change({ currentPassword: 'old-password', newPassword: 'short' })), ['newPassword'])
+        assert.deepEqual(pathsOf(change({ currentPassword: 'old-password' })), ['newPassword'])
+    })
+
+    it('refuses a new password equal to the current one', () => {
+        const result = change({ currentPassword: 'same-password', newPassword: 'same-password' })
+
+        assert.deepEqual(pathsOf(result), ['newPassword'])
+        assert.equal(result.error.issues[0].message, 'Choose a new password that is different from the current one')
+    })
+
+    it('ignores any other field (no user id can be smuggled in)', () => {
+        const result = change({ currentPassword: 'old-password', newPassword: 'new-password', userId: '64b64b64b64b64b64b64b64b', role: 'manager' })
+
+        assert.deepEqual(Object.keys(result.data).sort(), ['currentPassword', 'newPassword'])
     })
 })

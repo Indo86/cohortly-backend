@@ -1,7 +1,7 @@
 import bcrypt from 'bcrypt'
 import userModel from '../models/userModel.js'
 import { asyncHandler } from '../utils/asyncHandler.js'
-import { conflict, unauthorized } from '../utils/httpError.js'
+import { badRequest, conflict, unauthorized } from '../utils/httpError.js'
 import { signSessionToken } from '../utils/authToken.js'
 import { ROLES } from '../utils/roles.js'
 import { getEntitlementForUser } from '../services/entitlement.js'
@@ -102,4 +102,28 @@ export const getMe = asyncHandler(async (req, res) => {
             ...(await getEntitlementForUser(req.user)),
         },
     })
+})
+
+// PUT /api/me/password { currentPassword, newPassword }: the signed-in user changes THEIR OWN password.
+// The account comes from the token only (there is no user id in the request, so this can never become
+// a way to reset somebody else's password). The current password must be right; the new one follows
+// the password policy (utils/schema.js) and must differ from it. On success every existing token,
+// including the one used for this request, stops working: the client signs in again.
+export const changePassword = asyncHandler(async (req, res) => {
+    const user = await userModel.findById(req.user._id)
+
+    if (!user) throw unauthorized('Invalid or expired token')
+
+    if (!(await bcrypt.compare(req.body.currentPassword, user.password))) {
+        throw badRequest('Current password is incorrect.', {
+            code: 'CURRENT_PASSWORD_INCORRECT',
+            errors: [{ path: 'currentPassword', message: 'Current password is incorrect.' }],
+        })
+    }
+
+    user.password = await bcrypt.hash(req.body.newPassword, BCRYPT_ROUNDS)
+    user.passwordChangedAt = new Date()
+    await user.save()
+
+    return res.json({ message: 'Password changed. Please sign in again.' })
 })

@@ -404,8 +404,16 @@ date is a defensible reconstruction, not a historical fact; draft courses are sk
   origin) can display uploaded images.
 - **Passwords:** every new password needs 8 to 72 characters (`utils/schema.js` `passwordSchema`). Existing accounts
   keep signing in with their current password.
-- **Tokens:** HS256 only, `exp` and `iat` required, the user is re-read on every request. Changing a password sets
-  `User.passwordChangedAt`; tokens issued before it are rejected (`401`).
+- **Tokens:** HS256 only, `exp` and `iat` required, the user is re-read on every request (a deleted account is `401` at
+  once; the role always comes from the account, never from the token). Changing a password sets `User.passwordChangedAt`;
+  every token records the value it was issued against (`pwdAt`), so all tokens from before a change are rejected (`401`)
+  and a new sign-in works immediately (`utils/authToken.js`).
+- **Own password (M3):** `PUT /api/me/password` `{ currentPassword, newPassword }` for any signed-in user (any workspace
+  state). The account comes from the token only; the current password must match (`400 CURRENT_PASSWORD_INCORRECT`
+  otherwise), the new one follows the policy and must differ from it. Success signs out every session; failed attempts
+  are limited to 10 per account / 15 min. Instructors can still set a student's password (same invalidation).
+  There is no logout endpoint (tokens are stateless; the app forgets its token and cache) and no password reset by
+  e-mail (no e-mail provider).
 - **Uploads:** JPEG/PNG only, 2 MB, one file; the declared type must be on the allowlist and the real type is then read
   from the file signature (`file-type`). Anything else is deleted and refused (`400`); the stored extension follows the
   real type.
