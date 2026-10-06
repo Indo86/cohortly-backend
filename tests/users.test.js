@@ -131,6 +131,18 @@ describe('student password safety', () => {
         assert.equal((await signIn(student.email)).status, 401)
     })
 
+    it('applies the 8-character minimum to a new password (M2)', async () => {
+        const instructor = await createInstructor()
+        const student = await createStudent(instructor)
+
+        const short = await edit(instructor, student, { name: student.name, email: student.email, password: '1234567' })
+
+        assert.equal(short.status, 400)
+        assert.deepEqual(short.body.errors, [{ path: 'password', message: 'Use a password of at least 8 characters' }])
+        assert.equal((await edit(instructor, student, { name: student.name, email: student.email, password: '12345678' })).status, 200)
+        assert.equal((await signIn(student.email, '12345678')).status, 200)
+    })
+
     it('rejects a supplied password that is too short instead of silently ignoring it', async () => {
         const instructor = await createInstructor()
         const student = await createStudent(instructor)

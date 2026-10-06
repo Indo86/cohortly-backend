@@ -1,6 +1,7 @@
 import { describe, it, before, after, beforeEach } from 'node:test'
 import assert from 'node:assert/strict'
 import jwt from 'jsonwebtoken'
+import bcrypt from 'bcrypt'
 import supertest from 'supertest'
 import {
     PASSWORD, auth, createInstructor, createStudent, models, resetDb, startTestEnv, stopTestEnv, tokenFor,
@@ -69,6 +70,23 @@ describe('sign-in', () => {
 
         assert.equal(res.status, 400)
         assert.ok(Array.isArray(res.body.errors))
+    })
+})
+
+describe('password policy and existing accounts (M2)', () => {
+    it('an account created under the old 5-character minimum still signs in with its password', async () => {
+        const legacy = await models.userModel.create({
+            name: 'Legacy Instructor',
+            email: 'legacy@test.dev',
+            password: await bcrypt.hash('abc12', 4),
+            photo: 'default.png',
+            role: 'manager',
+        })
+
+        const res = await request.post('/api/sign-in').send({ email: legacy.email, password: 'abc12' })
+
+        assert.equal(res.status, 200)
+        assert.ok(res.body.data.token)
     })
 })
 

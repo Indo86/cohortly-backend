@@ -6,8 +6,19 @@ const objectId = (label = 'id') =>
 
 const email = z.string().trim().toLowerCase().email()
 
-// bcrypt only uses the first 72 bytes, so longer passwords are rejected instead of silently truncated
-const password = z.string().min(5).max(72)
+// The password policy for every NEW password (sign-up, a student created or edited by the instructor;
+// M3's change-password will reuse it). Length over complexity rules: at least 8 characters, at most 72
+// because bcrypt only uses the first 72 bytes (longer passwords are rejected instead of silently
+// truncated). Existing accounts keep working: sign-in only checks the stored hash.
+export const PASSWORD_MIN_LENGTH = 8
+export const PASSWORD_MAX_LENGTH = 72
+
+export const passwordSchema = z
+    .string()
+    .min(PASSWORD_MIN_LENGTH, `Use a password of at least ${PASSWORD_MIN_LENGTH} characters`)
+    .max(PASSWORD_MAX_LENGTH, `Use a password of at most ${PASSWORD_MAX_LENGTH} characters`)
+
+const password = passwordSchema
 
 export const signUpSchema = z.object({
     name: z.string().trim().min(5),
