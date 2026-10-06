@@ -48,7 +48,7 @@ Safety: the seed only resets the demo workspace (the demo instructor, the studen
 its courses with their content, progress, attempts and certificates, and its payments); every other account, course
 and certificate is left alone, and categories are only added. It refuses `NODE_ENV=production`, database names that
 contain "prod" and non-local hosts (`DEMO_SEED_ALLOW_REMOTE=true` allows a dedicated remote demo database). It never runs
-at server start.
+at server start. Walkthroughs: [docs/demo-scenarios.md](docs/demo-scenarios.md).
 
 (The previous demo accounts `instructor@demo.local` / `student@demo.local`, if they exist in a database, are not
 touched by this seed.)
