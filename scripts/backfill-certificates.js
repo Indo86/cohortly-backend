@@ -19,7 +19,8 @@
 //  - Lesson progress only reflects the present: a lesson that was undone and completed again moves
 //    the date, and nothing records when a course was "first" completed. The date is a defensible
 //    reconstruction, not a historical fact.
-//  - Draft courses are included (a student may have completed it while it was published).
+//  - Draft courses are skipped: only published courses issue certificates. Students who completed a
+//    course that is a draft now receive their certificate when the course is published again.
 import 'dotenv/config'
 import mongoose from 'mongoose'
 

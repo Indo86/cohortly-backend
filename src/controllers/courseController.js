@@ -11,6 +11,7 @@ import { findOwnedCourse, findOwnedStudent } from '../utils/ownership.js'
 import { buildOutline } from '../services/structure.js'
 import { deleteCourseCascade, unenrollStudent } from '../services/cascade.js'
 import { assertPublishable } from '../services/publishing.js'
+import { reconcileCourseCertificates } from '../services/certificates.js'
 
 const courseImageUrl = (name) => (name ? `${getConfig().appUrl}/uploads/courses/${name}` : null)
 const studentPhotoUrl = (name) => `${getConfig().appUrl}/uploads/students/${name}`
@@ -153,6 +154,10 @@ export const updateCourseStatus = asyncHandler(async (req, res) => {
 
     course.status = status
     await course.save()
+
+    // certificates are only issued for published courses: students who completed the course while it
+    // was a draft (e.g. after the instructor removed their last missing lesson) receive theirs now
+    if (publishing) await reconcileCourseCertificates(course._id)
 
     return res.json({
         message: status === 'published' ? 'Course published' : 'Course unpublished',

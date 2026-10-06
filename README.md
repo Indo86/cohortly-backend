@@ -365,9 +365,10 @@ Certificates:
 
 ### Certificates
 
-**Issuance.** A certificate is issued exactly when a student is course-complete by the rule above: on the last lesson of a course without a quiz,
-or on the passing quiz attempt. After an instructor deletes a lesson, a section or the quiz (which can complete a course for people who were
-waiting), the certificates that became due are issued too. `services/certificates.js` reads `studentCourseState`: it re-implements nothing.
+**Issuance.** A certificate is issued exactly when a student **enrolled** in a **published** course is course-complete by the rule above: on the last
+lesson of a course without a quiz, or on the passing quiz attempt. A draft course never issues a new certificate. After an instructor deletes a
+lesson, a section or the quiz (which can complete a course for people who were waiting), and when a course is published, the certificates that
+became due are issued too. `services/certificates.js` reads `studentCourseState`: it re-implements nothing.
 **Idempotent:** the unique `{student, course}` index decides; a repeated or concurrent call that loses the race gets the winner's certificate
 (tested with 8 to 12 simultaneous requests). Retrying the quiz, undoing and redoing a lesson, or later completions never create a second one.
 
@@ -391,7 +392,7 @@ keeps the name that was printed). If you must erase a person completely, remove 
 **Backfill.** `npm run backfill:certificates -- --dry-run` reports, and without the flag issues, certificates for enrollments that **currently** satisfy the rule and
 have none (courses completed before certificates existed). It never runs automatically, is idempotent, and prints a summary. `issuedAt` is the later of the student's most recent
 lesson completion and their first passing attempt. Limits: lesson progress only reflects the present (a lesson that was undone and completed again moves the date), so the
-date is a defensible reconstruction, not a historical fact; draft courses are included.
+date is a defensible reconstruction, not a historical fact; draft courses are skipped (their certificates are issued when they are published).
 
 ## Auth, authorization and access are separate
 

@@ -73,6 +73,16 @@ describe('certificate backfill (historical completions)', () => {
         assert.equal((await certificates())[0].certificateNumber, first.certificateNumber)
     })
 
+    it('skips draft courses: only published courses issue certificates', async () => {
+        await finishedStudent(new Date('2026-01-10T10:00:00Z'))
+        await models.courseModel.updateOne({ _id: course._id }, { status: 'draft' })
+
+        const report = await backfillCertificates()
+
+        assert.deepEqual(report, { courses: 0, students: 0, alreadyCertified: 0, eligible: 0, issued: 0 })
+        assert.equal((await certificates()).length, 0)
+    })
+
     it('skips students who have not completed the course', async () => {
         const partial = await createStudent(instructor)
 

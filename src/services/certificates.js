@@ -6,9 +6,10 @@ import { generateCertificateNumber } from '../utils/certificateNumber.js'
 import { loadStudentStates } from './learning.js'
 
 // Certificate issuance. The rules, in one place:
-//  - A certificate is issued exactly when a student is course-COMPLETE by the one completion
-//    rule (utils/progress.js summarizeProgress: all lessons, plus a passed final quiz when the
-//    course has one). Nothing here re-implements that rule: it reads studentCourseState.
+//  - A NEW certificate is issued exactly when the course is PUBLISHED, the student is ENROLLED in it
+//    and the student is course-COMPLETE by the one completion rule (utils/progress.js
+//    summarizeProgress: all lessons, plus a passed final quiz when the course has one). Nothing here
+//    re-implements the completion rule: it reads studentCourseState. A draft course never issues one.
 //  - IDEMPOTENT: one certificate per (student, course), enforced by a unique index. Repeated or
 //    concurrent calls cannot create a second one: the loser of a race hits the duplicate-key
 //    error and simply returns the winner's certificate.
@@ -20,25 +21,30 @@ const isDuplicateKey = (error) => error?.code === 11000
 // Returns { certificate, issued, eligible }:
 //   certificate  the student's certificate for the course (new or existing) or null
 //   issued       true only when THIS call created it
-//   eligible     the student currently satisfies the completion rule
+//   eligible     the student currently satisfies the issuance rule (published + enrolled + complete),
+//                or already holds a certificate (an issued certificate is never revoked)
 // `issuedAt` overrides the timestamp (backfill only); `dryRun` reports without writing.
 export const issueCertificateIfEligible = async (courseId, studentId, { issuedAt, dryRun = false } = {}) => {
     const existing = await certificateModel.findOne({ student: studentId, course: courseId }).lean()
 
     if (existing) return { certificate: existing, issued: false, eligible: true }
 
+    const notEligible = { certificate: null, issued: false, eligible: false }
+
+    // only a PUBLISHED course the student is ENROLLED in can issue a new certificate
+    const course = await courseModel.findOne({ _id: courseId, students: studentId, status: 'published' }).select('name manager').lean()
+
+    if (!course) return notEligible
+
     const { state, quiz } = (await loadStudentStates([courseId], studentId)).get(String(courseId))
 
-    if (!state.progress.completed) return { certificate: null, issued: false, eligible: false }
+    if (!state.progress.completed) return notEligible
 
     if (dryRun) return { certificate: null, issued: false, eligible: true }
 
-    const [course, student] = await Promise.all([
-        courseModel.findById(courseId).select('name manager').lean(),
-        userModel.findById(studentId).select('name').lean(),
-    ])
+    const student = await userModel.findById(studentId).select('name').lean()
 
-    if (!course || !student) return { certificate: null, issued: false, eligible: false }
+    if (!student) return notEligible
 
     const instructor = course.manager ? await userModel.findById(course.manager).select('name').lean() : null
     const snapshot = {
@@ -81,8 +87,9 @@ export const reconcileCourseCertificates = async (courseId) => {
 
 // ---- backfill (scripts/backfill-certificates.js) ------------------------------------------
 
-// Issues certificates for students who ALREADY satisfy the completion rule today and have none.
-// Never runs by itself. Idempotent, because it goes through issueCertificateIfEligible.
+// Issues certificates for students who ALREADY satisfy the issuance rule today (published course,
+// enrolled, complete) and have none. Draft courses are skipped. Never runs by itself. Idempotent,
+// because it goes through issueCertificateIfEligible.
 //
 // issuedAt policy: the moment the last requirement was met = the later of the student's most
 // recent lesson completion and (for a course with a quiz) their first passing attempt. Limits:
@@ -90,7 +97,7 @@ export const reconcileCourseCertificates = async (courseId) => {
 // moves the date), so the date is a defensible reconstruction, not a historical fact.
 export const backfillCertificates = async ({ dryRun = false, log = () => {} } = {}) => {
     const report = { courses: 0, students: 0, alreadyCertified: 0, eligible: 0, issued: 0 }
-    const courses = await courseModel.find().select('name students').lean()
+    const courses = await courseModel.find({ status: 'published' }).select('name students').lean()
 
     for (const course of courses) {
         report.courses += 1
