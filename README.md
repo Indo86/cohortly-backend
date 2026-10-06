@@ -16,7 +16,7 @@ stores the instructor role as `manager` (see `src/utils/roles.js`).
 npm install
 cp env.example .env        # then fill in the values (see comments in the file)
 npm run seed               # categories (safe to run repeatedly)
-npm run seed:demo          # optional: + demo instructor/student (never in production)
+npm run seed:demo          # optional: + the demo workspace (local databases only, see Demo data)
 npm run dev                # or: npm start
 ```
 
@@ -24,16 +24,41 @@ Required variables: `DATABASE_URL`, `SECRET_KEY_JWT` (16+ chars), `APP_URL`,
 `FRONTEND_URL`. The server refuses to start and lists what is missing.
 Upload folders (`public/uploads/courses|students`) are created automatically.
 
-Demo accounts from `npm run seed:demo` (password `demo-password-123`, or `DEMO_PASSWORD`):
-`instructor@demo.local` and `student@demo.local`. The demo workspace is granted one
-subscription period without payment; re-running the seed after it ended grants a new one.
+## Demo data
+
+`npm run seed:demo` builds a small, realistic demo workspace (`scripts/demo/`) and resets it to the same state on every
+run. Password for every account: `CohortlyDemo123!` (or `DEMO_PASSWORD`, which must satisfy the password policy).
+
+| Account | Persona |
+|---|---|
+| `demo.instructor@cohortly.local` | instructor, ACTIVE workspace (one successful demo payment, no Midtrans call) |
+| `demo.student1@cohortly.local` | enrolled in JavaScript Fundamentals, not started |
+| `demo.student2@cohortly.local` | in progress: JavaScript Fundamentals 4/8 lessons, Responsive Web Design 1/5 |
+| `demo.student3@cohortly.local` | completed both published courses (quiz failed once, then passed), two certificates |
+
+Courses: **JavaScript Fundamentals** (published, 3 sections, 8 lessons, a 4-question final quiz), **Responsive Web Design**
+(published, 2 sections, 5 lessons incl. one video, no quiz) and **Node.js API Design** (draft, 2 sections, 3 lessons).
+The dashboard shows 3 unique students over 5 enrollments.
+
+How it is built: through the application's own schemas, sanitizer, publish rule, quiz scoring and certificate service;
+progress exists only as lesson completion and quiz attempt records. Certificate numbers are random, so they change on
+every run: the seed prints them with their public verification path.
+
+Safety: the seed only resets the demo workspace (the demo instructor, the students it owns or that use a demo e-mail,
+its courses with their content, progress, attempts and certificates, and its payments); every other account, course
+and certificate is left alone, and categories are only added. It refuses `NODE_ENV=production`, database names that
+contain "prod" and non-local hosts (`DEMO_SEED_ALLOW_REMOTE=true` allows a dedicated remote demo database). It never runs
+at server start.
+
+(The previous demo accounts `instructor@demo.local` / `student@demo.local`, if they exist in a database, are not
+touched by this seed.)
 
 ## Scripts
 
 | Script | Purpose |
 |---|---|
 | `npm test` | Node test runner + supertest on an in-memory MongoDB (no real Midtrans calls) |
-| `npm run seed` / `seed:demo` | Idempotent bootstrap |
+| `npm run seed` / `seed:demo` | Categories (idempotent) / plus the demo workspace, reset on every run ([Demo data](#demo-data)) |
 | `npm run check:emails` | Read-only report of duplicate emails already in the database |
 | `npm run migrate:content -- --dry-run` | Moves legacy flat course content into sections/lessons (idempotent, never deletes legacy data) |
 | `npm run backfill:certificates -- --dry-run` | Reports (then, without the flag, issues) certificates for students who already completed a course before certificates existed. Idempotent, never runs at startup (see [Certificates](#certificates)) |
