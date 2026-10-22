@@ -43,7 +43,7 @@ export const verifyToken = asyncHandler(async (req, res, next) => {
         throw unauthorized('Invalid or expired token')
     }
 
-    const user = await userModel.findById(userId, '_id name email role manager passwordChangedAt')
+    const user = await userModel.findById(userId, '_id name email photo role manager passwordChangedAt')
 
     if (!user) throw unauthorized('Invalid or expired token')
 
@@ -56,6 +56,7 @@ export const verifyToken = asyncHandler(async (req, res, next) => {
         _id: user._id.toString(),
         name: user.name,
         email: user.email,
+        photo: user.photo,
         role: user.role,
         // owning instructor (students only); the source of a student's entitlement
         manager: user.manager ? user.manager.toString() : null,

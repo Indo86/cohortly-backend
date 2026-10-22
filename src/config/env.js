@@ -50,7 +50,7 @@ const trustProxy = () => {
 }
 
 export const getConfig = () => ({
-    port: Number(process.env.PORT) || 3000,
+    port: Number(process.env.PORT) || 3001,
     databaseUrl: process.env.DATABASE_URL ?? '',
     jwtSecret: process.env.SECRET_KEY_JWT ?? '',
     // public base URL of this backend, used to build image URLs

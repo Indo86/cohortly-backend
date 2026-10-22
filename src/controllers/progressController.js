@@ -1,6 +1,6 @@
 import courseModel from '../models/courseModel.js'
 import certificateModel from '../models/certificateModel.js'
-import { getConfig } from '../config/env.js'
+import { userPhotoUrl } from '../utils/photo.js'
 import { asyncHandler } from '../utils/asyncHandler.js'
 import { findOwnedCourse } from '../utils/ownership.js'
 import { isQuizReady } from '../utils/quiz.js'
@@ -32,8 +32,6 @@ export const getCourseProgress = asyncHandler(async (req, res) => {
         (await certificateModel.find({ course: course._id }).select('student').lean()).map((item) => String(item.student))
     )
 
-    const { appUrl } = getConfig()
-
     const students = [...course.students]
         .sort((a, b) => a.name.localeCompare(b.name) || String(a._id).localeCompare(String(b._id)))
         .map((student) => {
@@ -44,7 +42,7 @@ export const getCourseProgress = asyncHandler(async (req, res) => {
                 _id: student._id,
                 name: student.name,
                 email: student.email,
-                photo_url: `${appUrl}/uploads/students/${student.photo}`,
+                photo_url: userPhotoUrl(student.photo),
                 ...progressFor(entry, completed?.ids, { quizRequired: Boolean(quiz), quizPassed: Boolean(attempts?.passed) }),
                 lastActivityAt: completed?.lastAt ?? null,
                 quiz: quiz

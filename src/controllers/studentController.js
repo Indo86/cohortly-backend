@@ -2,7 +2,7 @@ import bcrypt from 'bcrypt'
 import userModel from '../models/userModel.js'
 import { deleteStudentCascade } from '../services/cascade.js'
 import { mutateStudentSchema, updateStudentSchema } from '../utils/schema.js'
-import { getConfig } from '../config/env.js'
+import { userPhotoUrl } from '../utils/photo.js'
 import { asyncHandler } from '../utils/asyncHandler.js'
 import { badRequest, conflict } from '../utils/httpError.js'
 import { parseOrThrow } from '../middlewares/validateRequest.js'
@@ -12,7 +12,6 @@ import { findOwnedStudent } from '../utils/ownership.js'
 
 const BCRYPT_ROUNDS = 12
 
-const studentPhotoUrl = (name) => `${getConfig().appUrl}/uploads/students/${name}`
 
 const cleanupUploadOnError = (handler) =>
     asyncHandler(async (req, res, next) => {
@@ -31,7 +30,7 @@ export const getStudents = asyncHandler(async (req, res) => {
 
     const response = students.map((item) => ({
         ...item.toObject(),
-        photo_url: studentPhotoUrl(item.photo),
+        photo_url: userPhotoUrl(item.photo),
     }))
 
     return res.json({
@@ -45,7 +44,7 @@ export const getStudentById = asyncHandler(async (req, res) => {
 
     return res.json({
         message: 'Get detail student success',
-        data: { _id: student._id, name: student.name, email: student.email },
+        data: { _id: student._id, name: student.name, email: student.email, photo_url: userPhotoUrl(student.photo) },
     })
 })
 

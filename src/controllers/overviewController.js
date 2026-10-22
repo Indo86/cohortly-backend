@@ -4,6 +4,7 @@ import userModel from '../models/userModel.js'
 import { getConfig } from '../config/env.js'
 import { asyncHandler } from '../utils/asyncHandler.js'
 import { ROLES } from '../utils/roles.js'
+import { userPhotoUrl } from '../utils/photo.js'
 
 // Instructor dashboard numbers, scoped strictly to the signed-in instructor.
 // totalStudents counts UNIQUE students enrolled in at least one of the instructor's courses (a student
@@ -49,7 +50,7 @@ export const getOverviews = asyncHandler(async (req, res) => {
             })),
             students: students.map((item) => ({
                 ...item.toObject(),
-                photo_url: `${appUrl}/uploads/students/${item.photo}`,
+                photo_url: userPhotoUrl(item.photo),
             })),
         },
     })

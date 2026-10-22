@@ -521,7 +521,7 @@ describe('/api/me and sign-in contract', () => {
 
         const data = await me(instructor)
 
-        assert.deepEqual(Object.keys(data).sort(), ['accessExpiresAt', 'accessStartsAt', 'accessStatus', 'email', 'name', 'role'])
+        assert.deepEqual(Object.keys(data).sort(), ['accessExpiresAt', 'accessStartsAt', 'accessStatus', 'email', 'name', 'photo_url', 'role'])
         assert.equal(data.role, 'manager')
         assert.equal(data.accessStatus, 'ACTIVE')
         assert.equal(iso(data.accessStartsAt), iso(paidAt))

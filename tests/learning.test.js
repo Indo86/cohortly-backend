@@ -391,7 +391,8 @@ describe('instructor progress view', () => {
         assert.ok(mine.lastActivityAt)
         assert.equal(done.progress.completed, true)
         assert.equal(done.nextLesson, null)
-        assert.ok(done.photo_url.includes('/uploads/students/'))
+        // the test students never uploaded an avatar: no URL, the client shows initials
+        assert.equal(done.photo_url, null)
         assert.equal(JSON.stringify(res.body).includes('password'), false)
     })
 

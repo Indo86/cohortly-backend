@@ -8,13 +8,14 @@ import { badRequest } from '../utils/httpError.js'
 import { parseOrThrow } from '../middlewares/validateRequest.js'
 import { removeUpload, removeUploadedFile } from '../utils/files.js'
 import { findOwnedCourse, findOwnedStudent } from '../utils/ownership.js'
+import { userPhotoUrl } from '../utils/photo.js'
 import { buildOutline } from '../services/structure.js'
 import { deleteCourseCascade, unenrollStudent } from '../services/cascade.js'
 import { assertPublishable } from '../services/publishing.js'
 import { reconcileCourseCertificates } from '../services/certificates.js'
 
 const courseImageUrl = (name) => (name ? `${getConfig().appUrl}/uploads/courses/${name}` : null)
-const studentPhotoUrl = (name) => `${getConfig().appUrl}/uploads/students/${name}`
+const studentPhotoUrl = userPhotoUrl
 
 // Runs a handler body and removes the just-uploaded file if the request fails afterwards.
 const cleanupUploadOnError = (handler) =>

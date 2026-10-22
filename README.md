@@ -11,15 +11,33 @@
 
 [API reference](docs/API.md) · [Architecture](docs/ARCHITECTURE.md) · [Database](docs/DATABASE.md) · [Development guide](docs/DEVELOPMENT.md) · [Demo scenarios](docs/demo-scenarios.md)
 
+<p align="center">
+  <a href="#overview"><img src="https://fonts.gstatic.com/s/e/notoemoji/latest/1f331/512.gif" width="20" height="20" align="absmiddle" alt="🌱"> Overview</a>
+  ·
+  <a href="#key-features"><img src="https://fonts.gstatic.com/s/e/notoemoji/latest/2728/512.gif" width="20" height="20" align="absmiddle" alt="✨"> Features</a>
+  ·
+  <a href="#tech-stack"><img src="https://fonts.gstatic.com/s/e/notoemoji/latest/1f4bb/512.gif" width="20" height="20" align="absmiddle" alt="💻"> Stack</a>
+  ·
+  <a href="#system-architecture"><img src="https://fonts.gstatic.com/s/e/notoemoji/latest/2699_fe0f/512.gif" width="20" height="20" align="absmiddle" alt="⚙️"> Architecture</a>
+  ·
+  <a href="#api-overview"><img src="https://fonts.gstatic.com/s/e/notoemoji/latest/1f50c/512.gif" width="20" height="20" align="absmiddle" alt="🔌"> API</a>
+  ·
+  <a href="#getting-started"><img src="https://fonts.gstatic.com/s/e/notoemoji/latest/1f680/512.gif" width="20" height="20" align="absmiddle" alt="🚀"> Start</a>
+  ·
+  <a href="#project-structure"><img src="https://fonts.gstatic.com/s/e/notoemoji/latest/1f4e6/512.gif" width="20" height="20" align="absmiddle" alt="📦"> Structure</a>
+  ·
+  <a href="#engineering-highlights"><img src="https://fonts.gstatic.com/s/e/notoemoji/latest/1f4a1/512.gif" width="20" height="20" align="absmiddle" alt="💡"> Highlights</a>
+</p>
+
 </div>
 
-## Overview
+## <img src="https://fonts.gstatic.com/s/e/notoemoji/latest/1f331/512.gif" width="32" height="32" align="absmiddle" alt="🌱"> Overview
 
 Cohortly is the backend for a business-to-business learning management system. It gives instructors a subscription-gated workspace for managing students, authoring ordered text and video courses, publishing learning content, tracking progress, building final quizzes, and issuing certificates. Students consume published courses through a separate learning API with enrollment, entitlement, and ownership checks applied at the server boundary.
 
 The service also integrates with Midtrans for manual activation and renewal payments and can optionally provide lesson-grounded study assistance through OpenRouter. Core learning, assessment, payment, and certificate rules remain deterministic and do not depend on AI availability.
 
-## Key features
+## <img src="https://fonts.gstatic.com/s/e/notoemoji/latest/2728/512.gif" width="32" height="32" align="absmiddle" alt="✨"> Key features
 
 - **Identity and workspace access** — instructor registration, JWT sessions, password changes, instructor/student roles, ownership isolation, and access derived from successful subscription payments.
 - **Course and learner management** — instructor-scoped students, enrollments, categories, draft/published courses, ordered sections and lessons, sanitized rich text, and hardened image uploads.
@@ -28,7 +46,7 @@ The service also integrates with Midtrans for manual activation and renewal paym
 - **Payments and renewals** — Midtrans hosted checkout, signed webhook verification, amount validation, replay-safe state transitions, and calendar-month entitlement periods.
 - **Optional AI assistance** — lesson questions, cached summaries, practice questions, and instructor-reviewed quiz drafts, with provider isolation, context limits, output validation, and usage controls.
 
-## Tech stack
+## <img src="https://fonts.gstatic.com/s/e/notoemoji/latest/1f4bb/512.gif" width="32" height="32" align="absmiddle" alt="💻"> Tech stack
 
 | Area | Technology |
 | --- | --- |
@@ -41,7 +59,7 @@ The service also integrates with Midtrans for manual activation and renewal paym
 | Testing | Node.js test runner, Supertest, MongoDB Memory Server |
 | External services | Midtrans; OpenRouter when AI is enabled |
 
-## System architecture
+## <img src="https://fonts.gstatic.com/s/e/notoemoji/latest/2699_fe0f/512.gif" width="32" height="32" align="absmiddle" alt="⚙️"> System architecture
 
 The codebase follows a route–middleware–controller structure, with domain services for workflows shared across controllers. Mongoose models own persistence rules and indexes; focused utility modules hold pure logic such as progress calculation, quiz scoring, subscription periods, sanitization, and ownership lookups.
 
@@ -64,7 +82,7 @@ A typical protected request is authenticated, checked for the required role and 
 
 See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for workflow and consistency details.
 
-## API overview
+## <img src="https://fonts.gstatic.com/s/e/notoemoji/latest/1f50c/512.gif" width="32" height="32" align="absmiddle" alt="🔌"> API overview
 
 All routes use the `/api` prefix. Protected calls send `Authorization: JWT <token>`.
 
@@ -85,7 +103,7 @@ All routes use the `/api` prefix. Protected calls send `Authorization: JWT <toke
 
 The complete route inventory, request shapes, access rules, and error contract are documented in [docs/API.md](docs/API.md).
 
-## Authentication and security
+## <img src="https://fonts.gstatic.com/s/e/notoemoji/latest/1f512/512.gif" width="32" height="32" align="absmiddle" alt="🔒"> Authentication and security
 
 - Tokens are HS256 JWTs with `iat`, `exp`, and a one-day lifetime. The user and role are reloaded on every protected request.
 - Passwords are hashed with bcrypt using 12 rounds. New passwords must contain 8–72 characters.
@@ -98,7 +116,7 @@ The complete route inventory, request shapes, access rules, and error contract a
 
 These controls are implementation safeguards, not a claim of formal security certification. Operational limitations are listed below.
 
-## Database design
+## <img src="https://fonts.gstatic.com/s/e/notoemoji/latest/1f4ca/512.gif" width="32" height="32" align="absmiddle" alt="📊"> Database design
 
 MongoDB is accessed through Mongoose. The primary hierarchy is `Course → Section → Lesson`; enrollments connect students to courses, while progress stores one completion record per student and lesson. Quizzes embed their questions and options because they are read and updated as one aggregate. Attempts and certificates are immutable historical records rather than mutable counters.
 
@@ -124,7 +142,7 @@ erDiagram
 
 Schema, indexes, cascade policies, and migration utilities are covered in [docs/DATABASE.md](docs/DATABASE.md).
 
-## Getting started
+## <img src="https://fonts.gstatic.com/s/e/notoemoji/latest/1f680/512.gif" width="32" height="32" align="absmiddle" alt="🚀"> Getting started
 
 ### Prerequisites
 
@@ -171,7 +189,7 @@ For a resettable portfolio workspace instead of categories alone, use `npm run s
 
 See [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) for every environment variable, script, migration, and troubleshooting note.
 
-## Testing and quality
+## <img src="https://fonts.gstatic.com/s/e/notoemoji/latest/2705/512.gif" width="32" height="32" align="absmiddle" alt="✅"> Testing and quality
 
 ```bash
 npm test
@@ -181,7 +199,7 @@ The suite runs serially with Node's built-in test runner. Supertest exercises th
 
 The repository currently has no lint, formatting, static type-check, or CI/CD command configured; `npm test` is the available automated quality gate.
 
-## Engineering highlights
+## <img src="https://fonts.gstatic.com/s/e/notoemoji/latest/1f4a1/512.gif" width="32" height="32" align="absmiddle" alt="💡"> Engineering highlights
 
 1. **Payment history is the entitlement source of truth.** Access is replayed from successful payment grants using calendar-month arithmetic. Early renewals extend the current period, expired renewals start at payment time, and pending or failed renewals cannot shorten active access.
 2. **Webhook processing is replay-safe.** Midtrans signatures and amounts are verified before an atomic `pending → success|failed` update. Only the winning success transition sets `paidAt`, so duplicate or concurrent notifications cannot grant another period.
@@ -189,7 +207,7 @@ The repository currently has no lint, formatting, static type-check, or CI/CD co
 4. **Assessment data is separated by audience.** Student quiz responses are built from explicit field allow-lists without answer keys. Submitted scores and pass/fail values are ignored; the server validates every question/option pair and calculates the result from stored quiz data.
 5. **Certificates are idempotent historical snapshots.** A unique student/course index resolves concurrent issuance, while copied names, lesson counts, scores, and issue dates keep an earned certificate verifiable after later course or account changes.
 
-## Project structure
+## <img src="https://fonts.gstatic.com/s/e/notoemoji/latest/1f4e6/512.gif" width="32" height="32" align="absmiddle" alt="📦"> Project structure
 
 ```text
 .
@@ -210,7 +228,7 @@ The repository currently has no lint, formatting, static type-check, or CI/CD co
 └── public/uploads/      # Runtime-managed local image storage
 ```
 
-## Operational boundaries
+## <img src="https://fonts.gstatic.com/s/e/notoemoji/latest/1f6a7/512.gif" width="32" height="32" align="absmiddle" alt="🚧"> Operational boundaries
 
 - Rate-limit and AI-usage counters are process-local; multi-instance deployment needs a shared store.
 - Uploaded images use the local filesystem; horizontal or ephemeral deployments need shared/object storage.
@@ -219,7 +237,7 @@ The repository currently has no lint, formatting, static type-check, or CI/CD co
 - The Gemini provider is a disabled extension point; only OpenRouter is implemented.
 - No OpenAPI schema, hosted API explorer, deployment manifest, or CI workflow is included.
 
-## Additional documentation
+## <img src="https://fonts.gstatic.com/s/e/notoemoji/latest/1f4da/512.gif" width="32" height="32" align="absmiddle" alt="📚"> Additional documentation
 
 - [API reference](docs/API.md) — complete endpoint inventory, access rules, and request contracts
 - [Architecture](docs/ARCHITECTURE.md) — components, core flows, consistency, and integration boundaries

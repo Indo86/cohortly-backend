@@ -1,7 +1,9 @@
 import express from "express";
 import { validateRequest } from "../middlewares/validateRequest.js";
 import { changePasswordSchema, signInSchema, signUpSchema } from "../utils/schema.js";
-import { changePassword, getMe, signInAction, signUpAction } from "../controllers/authController.js";
+import { changePassword, getMe, signInAction, signUpAction, updateAvatar } from "../controllers/authController.js";
+import { uploadImage } from "../utils/multer.js";
+import { AVATAR_FOLDER } from "../utils/photo.js";
 import { authenticated } from "../middlewares/guards.js";
 import { rateLimitFor } from "../middlewares/rateLimit.js";
 
@@ -13,5 +15,7 @@ authRoutes.post('/sign-in', rateLimitFor('signIn'), validateRequest(signInSchema
 authRoutes.get('/me', authenticated, getMe)
 // the signed-in user's own password (any role, any workspace state); wrong current passwords are rate limited
 authRoutes.put('/me/password', authenticated, rateLimitFor('passwordChange'), validateRequest(changePasswordSchema), changePassword)
+// the signed-in user's own avatar (any role, any workspace state), multipart field "avatar"
+authRoutes.put('/me/avatar', authenticated, uploadImage(AVATAR_FOLDER, 'avatar'), updateAvatar)
 
 export default authRoutes

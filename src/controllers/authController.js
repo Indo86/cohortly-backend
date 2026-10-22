@@ -6,6 +6,8 @@ import { signSessionToken } from '../utils/authToken.js'
 import { ROLES } from '../utils/roles.js'
 import { getEntitlementForUser } from '../services/entitlement.js'
 import { startCheckout } from '../services/payments.js'
+import { removeUpload, removeUploadedFile } from '../utils/files.js'
+import { AVATAR_FOLDER, userPhotoUrl } from '../utils/photo.js'
 
 const BCRYPT_ROUNDS = 12
 
@@ -83,6 +85,7 @@ export const signInAction = asyncHandler(async (req, res) => {
         data: {
             name: existingUser.name,
             email: existingUser.email,
+            photo_url: userPhotoUrl(existingUser.photo),
             token,
             role: existingUser.role,
             ...entitlement,
@@ -98,10 +101,39 @@ export const getMe = asyncHandler(async (req, res) => {
         data: {
             name: req.user.name,
             email: req.user.email,
+            photo_url: userPhotoUrl(req.user.photo),
             role: req.user.role,
             ...(await getEntitlementForUser(req.user)),
         },
     })
+})
+
+// PUT /api/me/avatar (multipart, field "avatar"): the signed-in user, instructor or student, replaces
+// THEIR OWN avatar. The account comes from the token only. The previous file is removed once the new
+// one is saved; a failed request leaves nothing behind.
+export const updateAvatar = asyncHandler(async (req, res) => {
+    if (!req.file) throw badRequest('Avatar image is required')
+
+    try {
+        const user = await userModel.findById(req.user._id)
+
+        if (!user) throw unauthorized('Invalid or expired token')
+
+        const oldPhoto = user.photo
+
+        user.photo = req.file.filename
+        await user.save()
+
+        removeUpload(AVATAR_FOLDER, oldPhoto)
+
+        return res.json({
+            message: 'Avatar updated',
+            data: { photo_url: userPhotoUrl(user.photo) },
+        })
+    } catch (error) {
+        removeUploadedFile(req.file)
+        throw error
+    }
 })
 
 // PUT /api/me/password { currentPassword, newPassword }: the signed-in user changes THEIR OWN password.
