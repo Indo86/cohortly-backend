@@ -12,21 +12,21 @@
 [API reference](docs/API.md) · [Architecture](docs/ARCHITECTURE.md) · [Database](docs/DATABASE.md) · [Development guide](docs/DEVELOPMENT.md) · [Demo scenarios](docs/demo-scenarios.md)
 
 <p align="center">
-  <a href="#overview"><img src="https://fonts.gstatic.com/s/e/notoemoji/latest/1f331/512.gif" width="20" height="20" align="absmiddle" alt="🌱"> Overview</a>
+  <a href="#overview">Overview</a>
   ·
-  <a href="#key-features"><img src="https://fonts.gstatic.com/s/e/notoemoji/latest/2728/512.gif" width="20" height="20" align="absmiddle" alt="✨"> Features</a>
+  <a href="#key-features">Features</a>
   ·
-  <a href="#tech-stack"><img src="https://fonts.gstatic.com/s/e/notoemoji/latest/1f4bb/512.gif" width="20" height="20" align="absmiddle" alt="💻"> Stack</a>
+  <a href="#tech-stack">Stack</a>
   ·
-  <a href="#system-architecture"><img src="https://fonts.gstatic.com/s/e/notoemoji/latest/2699_fe0f/512.gif" width="20" height="20" align="absmiddle" alt="⚙️"> Architecture</a>
+  <a href="#system-architecture">Architecture</a>
   ·
-  <a href="#api-overview"><img src="https://fonts.gstatic.com/s/e/notoemoji/latest/1f50c/512.gif" width="20" height="20" align="absmiddle" alt="🔌"> API</a>
+  <a href="#api-overview">API</a>
   ·
-  <a href="#getting-started"><img src="https://fonts.gstatic.com/s/e/notoemoji/latest/1f680/512.gif" width="20" height="20" align="absmiddle" alt="🚀"> Start</a>
+  <a href="#getting-started">Start</a>
   ·
-  <a href="#project-structure"><img src="https://fonts.gstatic.com/s/e/notoemoji/latest/1f4e6/512.gif" width="20" height="20" align="absmiddle" alt="📦"> Structure</a>
+  <a href="#project-structure">Structure</a>
   ·
-  <a href="#engineering-highlights"><img src="https://fonts.gstatic.com/s/e/notoemoji/latest/1f4a1/512.gif" width="20" height="20" align="absmiddle" alt="💡"> Highlights</a>
+  <a href="#engineering-highlights">Highlights</a>
 </p>
 
 </div>
